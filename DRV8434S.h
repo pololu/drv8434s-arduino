@@ -545,7 +545,7 @@ protected:
     driver.writeReg(DRV8434SRegAddr::CTRL5, ctrl5);
   }
 
-  /// Writes the cached value of the CTRL1 register to the device.
+  /// Writes the cached value of the CTRL6 register to the device.
   void writeCTRL6()
   {
     driver.writeReg(DRV8434SRegAddr::CTRL6, ctrl6);
