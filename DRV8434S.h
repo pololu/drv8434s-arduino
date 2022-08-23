@@ -337,6 +337,29 @@ public:
     writeCTRL2();
   }
 
+  /// Sets the driver's current scalar (TRQ_DAC), which scales the
+  /// full-scale current limit by the specified percentage. The available
+  /// settings are multiples of 6.25%. This function takes an integer and picks
+  /// the closest setting that is lower or is higher by less than 1%.
+  ///
+  /// Example usage:
+  /// ~~~{.cpp}
+  /// sd.setCurrentPercent(30); // sets TRQ_DAC to 25%
+  /// sd.setCurrentPercent(31); // sets TRQ_DAC to 31.25%
+  ///
+  /// // Passing a float still produces the expected result even though the
+  /// // argument is converted to an int (rounded down); this is the same
+  /// // as passing 31:
+  /// sd.setCurrentPercent(31.25); // sets TRQ_DAC to 31.25%
+  /// ~~~
+  void setCurrentPercent(uint8_t percent)
+  {
+    if (percent > 100) percent = 100;
+    if (percent < 6)   percent = 6;
+    uint8_t td = 16 - ((uint16_t)percent * 4 + 3) / 25;
+    ctrl1 = (ctrl1 & 0b00001111) | (td << 4);
+  }
+
   /// Enables the driver (EN_OUT = 1).
   void enableDriver()
   {
