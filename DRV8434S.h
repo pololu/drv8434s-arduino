@@ -234,11 +234,16 @@ enum class DRV8434SStepMode : uint8_t
 {
   /// Full step with 100% current
   MicroStep1_100 = 0b0000,
+
   /// Full step with 71% current
-  MicroStep1_71  = 0b0001,
+  MicroStep1     = 0b0001,
+
   /// Non-circular 1/2 step
   MicroStep2_NC  = 0b0010,
+
+  /// Circular 1/2 step
   MicroStep2     = 0b0011,
+
   MicroStep4     = 0b0100,
   MicroStep8     = 0b0101,
   MicroStep16    = 0b0110,
@@ -454,6 +459,38 @@ public:
 
     ctrl3 = (ctrl3 & 0b11110000) | (uint8_t)mode;
     writeCTRL3();
+  }
+
+  /// Sets the driver's stepping mode (MICROSTEP_MODE).
+  ///
+  /// This version of the function allows you to express the requested
+  /// microstepping ratio as a number directly.
+  ///
+  /// Example usage:
+  /// ~~~{.cpp}
+  /// sd.setStepMode(32);
+  /// ~~~
+  void setStepMode(uint16_t mode)
+  {
+    uint8_t sm;
+
+    switch (mode)
+    {
+      case 1:   sm = DRV8434SStepMode::MicroStep1;   break;
+      case 2:   sm = DRV8434SStepMode::MicroStep2;   break;
+      case 4:   sm = DRV8434SStepMode::MicroStep4;   break;
+      case 8:   sm = DRV8434SStepMode::MicroStep8;   break;
+      case 16:  sm = DRV8434SStepMode::MicroStep16;  break;
+      case 32:  sm = DRV8434SStepMode::MicroStep32;  break;
+      case 64:  sm = DRV8434SStepMode::MicroStep64;  break;
+      case 128: sm = DRV8434SStepMode::MicroStep128; break;
+      case 256: sm = DRV8434SStepMode::MicroStep256; break;
+
+      // Invalid mode; pick 1/16 micro-step by default.
+      default:  sm = DRV8434SStepMode::MicroStep16;
+    }
+
+    setStepMode(sm);
   }
 
   /// Reads the FAULT status register of the driver.
