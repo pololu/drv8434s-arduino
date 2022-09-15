@@ -368,6 +368,7 @@ public:
     uint8_t td = ((uint16_t)percent * 4 + 3) / 25; // convert 6-100% to 1-16, rounding up by at most 0.75%
     td = 16 - td;                                  // convert 1-16 to 15-0 (15 = 6.25%, 0 = 100%)
     ctrl1 = (ctrl1 & 0b00001111) | (td << 4);
+    writeCTRL1();
   }
 
   /// Sets the driver's current scalar (TRQ_DAC) to produce the specified
@@ -395,6 +396,7 @@ public:
     if (td == 0) { td = 1; }                 // restrict to 1-16
     td = 16 - td;                            // convert 1-16 to 15-0 (15 = 6.25%, 0 = 100%)
     ctrl1 = (ctrl1 & 0b00001111) | (td << 4);
+    writeCTRL1();
   }
 
   /// Enables the driver (EN_OUT = 1).
@@ -532,7 +534,7 @@ public:
   /// ~~~
   void setStepMode(uint16_t mode)
   {
-    uint8_t sm;
+    DRV8434SStepMode sm;
 
     switch (mode)
     {
