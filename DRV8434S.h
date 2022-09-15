@@ -339,24 +339,61 @@ public:
 
   /// Sets the driver's current scalar (TRQ_DAC), which scales the
   /// full-scale current limit by the specified percentage. The available
-  /// settings are multiples of 6.25%. This function takes an integer and picks
-  /// the closest setting that is lower or is higher by less than 1%.
+  /// settings are multiples of 6.25%.
+  ///
+  /// This function takes an integer, and if the desired current limit is not
+  /// available, it generally tries to pick the closest current limit that is
+  /// lower than the desired one (although the lowest possible setting is
+  /// 6.25%). However, it will round up if the next setting is no more than
+  /// 0.75% higher; this allows you to specify 43.75% by passing a value of 43,
+  /// for example.
   ///
   /// Example usage:
   /// ~~~{.cpp}
-  /// sd.setCurrentPercent(30); // sets TRQ_DAC to 25%
-  /// sd.setCurrentPercent(31); // sets TRQ_DAC to 31.25%
+  /// // This sets TRQ_DAC to 37.5% (the closest setting lower than 42%):
+  /// sd.setCurrentPercent(42);
   ///
-  /// // Passing a float still produces the expected result even though the
-  /// // argument is converted to an int (rounded down); this is the same
-  /// // as passing 31:
-  /// sd.setCurrentPercent(31.25); // sets TRQ_DAC to 31.25%
+  /// // This sets TRQ_DAC to 43.75% (rounding 43 up by 0.75% to 43.75%):
+  /// sd.setCurrentPercent(43);
+  ///
+  /// // This also sets TRQ_DAC to 43.75%; even though the argument is truncated
+  /// // to an integer (43), that is then rounded up by 0.75% to 43.75%:
+  /// sd.setCurrentPercent(43.75);
   /// ~~~
   void setCurrentPercent(uint8_t percent)
   {
-    if (percent > 100) percent = 100;
-    if (percent < 6)   percent = 6;
-    uint8_t td = 16 - ((uint16_t)percent * 4 + 3) / 25;
+    if (percent > 100) { percent = 100; }
+    if (percent < 6) { percent = 6; }
+
+    uint8_t td = ((uint16_t)percent * 4 + 3) / 25; // convert 6-100% to 1-16, rounding up by at most 0.75%
+    td = 16 - td;                                  // convert 1-16 to 15-0 (15 = 6.25%, 0 = 100%)
+    ctrl1 = (ctrl1 & 0b00001111) | (td << 4);
+  }
+
+  /// Sets the driver's current scalar (TRQ_DAC) to produce the specified
+  /// scaled current limit in milliamps. In order to calculate the correct value for
+  /// TRQ_DAC, this function also needs to know the full-scale current limit
+  /// (potentiometer setting); if this optional argument is not given, it is
+  /// assumed to be 2000 milliamps (2 A). If the desired current limit is not
+  /// available, this function tries to pick the closest current limit that is
+  /// lower than the desired one (although the lowest possible setting is 6.25%
+  /// of the full-scale current limit).
+  ///
+  /// Example usage:
+  /// ~~~{.cpp}
+  /// // This specifies that we want a scaled current limit of 1200 mA and that
+  /// // the full-scale current limit is set to 1500 mA. TRQ_DAC will be set to
+  /// // 75%, which will produce a 1125 mA current limit.
+  /// sd.setCurrentMilliamps(1200, 1500);
+  /// ~~~
+  void setCurrentMilliamps(uint16_t current, uint16_t fullScale = 2000)
+  {
+    if (fullScale > 4000) { fullScale = 4000; }
+    if (current > fullScale) { current = fullScale; }
+
+    uint8_t td = (current * 16 / fullScale); // convert 0-fullScale to 0-16
+    if (td == 0) { td = 1; }                 // restrict to 1-16
+    td = 16 - td;                            // convert 1-16 to 15-0 (15 = 6.25%, 0 = 100%)
     ctrl1 = (ctrl1 & 0b00001111) | (td << 4);
   }
 
