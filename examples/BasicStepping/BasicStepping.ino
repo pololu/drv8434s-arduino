@@ -51,19 +51,21 @@ void setup()
   // Set the scaled current limit. You should change the number here to an
   // appropriate value for your particular system.
   //
-  // This function call assumes the full-scale current limit of the DRV8434S has
-  // been set to 2000 mA. This is true if you are using the "2A Max. Current"
-  // version or if you have VREF set to 2.64 V on the "Potentiometer for Max.
-  // Current" version.
+  // This function call assumes that VREF on the DRV8434S has been set to
+  // produce a full current limit of 2000 mA. This is true if you are using the
+  // "2A Max. Current Limit" version or if you have VREF set to 2.64 V on the
+  // "Potentiometer for Max. Current Limit" version.
   //
-  // Otherwise, you should pass your actual full-scale current limit as the
-  // second argument to this function; for example, if you want a current limit
-  // of 1 A and your full-scale current limit is set to 1.5 A, you can use:
+  // Otherwise, you should pass your actual full current limit as the second
+  // argument to this function; for example, if you want a current limit of 1 A
+  // and your full current limit is set to 1.5 A, you can use:
   //
   // sd.setCurrentMilliamps(1000, 1500);
   //
   // Alternatively, you can use the setCurrentPercent() function to set the
-  // scaled current limit as a percentage of the full-scale current limit.
+  // scaled current limit as a percentage of the full current limit, or if you
+  // are using the potentiometer version, you can set the current limit using
+  // VREF alone and comment out this line to leave the current scalar at 100%.
   sd.setCurrentMilliamps(1000);
 
   // Set the number of microsteps that correspond to one full step.

@@ -337,9 +337,9 @@ public:
     writeCTRL2();
   }
 
-  /// Sets the driver's current scalar (TRQ_DAC), which scales the
-  /// full-scale current limit by the specified percentage. The available
-  /// settings are multiples of 6.25%.
+  /// Sets the driver's current scalar (TRQ_DAC), which scales the full current
+  /// limit (as set by VREF) by the specified percentage. The available settings
+  /// are multiples of 6.25%.
   ///
   /// This function takes an integer, and if the desired current limit is not
   /// available, it generally tries to pick the closest current limit that is
@@ -371,30 +371,33 @@ public:
     writeCTRL1();
   }
 
-  /// Sets the driver's current scalar (TRQ_DAC) to produce the specified
-  /// scaled current limit in milliamps. In order to calculate the correct value for
-  /// TRQ_DAC, this function also needs to know the full-scale current limit
-  /// (potentiometer setting); if this optional argument is not given, it is
-  /// assumed to be 2000 milliamps (2 A). If the desired current limit is not
+  /// Sets the driver's current scalar (TRQ_DAC) to produce the specified scaled
+  /// current limit in milliamps. In order to calculate the correct value for
+  /// TRQ_DAC, this function also needs to know the full current limit set by
+  /// VREF (i.e. what the current limit is when the scaling is set to 100%).
+  /// This is specified by the optional `fullCurrent` argument, which defaults
+  /// to 2000 milliamps (2 A).
+  ///
+  /// If the desired current limit is not
   /// available, this function tries to pick the closest current limit that is
   /// lower than the desired one (although the lowest possible setting is 6.25%
-  /// of the full-scale current limit).
+  /// of the full current limit).
   ///
   /// Example usage:
   /// ~~~{.cpp}
   /// // This specifies that we want a scaled current limit of 1200 mA and that
-  /// // the full-scale current limit is set to 1500 mA. TRQ_DAC will be set to
-  /// // 75%, which will produce a 1125 mA current limit.
+  /// // VREF is set to produce a full current limit of 1500 mA. TRQ_DAC will be
+  /// // set to 75%, which will produce a 1125 mA scaled current limit.
   /// sd.setCurrentMilliamps(1200, 1500);
   /// ~~~
-  void setCurrentMilliamps(uint16_t current, uint16_t fullScale = 2000)
+  void setCurrentMilliamps(uint16_t current, uint16_t fullCurrent = 2000)
   {
-    if (fullScale > 4000) { fullScale = 4000; }
-    if (current > fullScale) { current = fullScale; }
+    if (fullCurrent > 4000) { fullCurrent = 4000; }
+    if (current > fullCurrent) { current = fullCurrent; }
 
-    uint8_t td = (current * 16 / fullScale); // convert 0-fullScale to 0-16
-    if (td == 0) { td = 1; }                 // restrict to 1-16
-    td = 16 - td;                            // convert 1-16 to 15-0 (15 = 6.25%, 0 = 100%)
+    uint8_t td = (current * 16 / fullCurrent); // convert 0-fullCurrent to 0-16
+    if (td == 0) { td = 1; }                   // restrict to 1-16
+    td = 16 - td;                              // convert 1-16 to 15-0 (15 = 6.25%, 0 = 100%)
     ctrl1 = (ctrl1 & 0b00001111) | (td << 4);
     writeCTRL1();
   }
