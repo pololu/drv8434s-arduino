@@ -8,10 +8,6 @@
 // Since SPI is used to trigger steps and set the direction, connecting the
 // driver's STEP and DIR pins is optional for this example. However, note that
 // using SPI control adds some overhead compared to using the STEP and DIR pins.
-// In addition, since the library caches SPI register values, SPI control is
-// more likely to re-enable the driver with the wrong settings (e.g. current
-// limit) after a power interruption, although using the verifySettings() and
-// applySettings() functions appropriately can help prevent this.
 //
 // Before using this example, be sure to change the setCurrentMilliamps line
 // to have an appropriate current limit for your system.  Also, see this
