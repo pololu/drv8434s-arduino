@@ -325,16 +325,16 @@ public:
   /// back into the desired state.
   void applySettings()
   {
-    writeCTRL1();
-    writeCTRL3();
-    writeCTRL4();
-    writeCTRL5();
-    writeCTRL6();
-    writeCTRL7();
+    writeCachedReg(DRV8434SRegAddr::CTRL1);
+    writeCachedReg(DRV8434SRegAddr::CTRL3);
+    writeCachedReg(DRV8434SRegAddr::CTRL4);
+    writeCachedReg(DRV8434SRegAddr::CTRL5);
+    writeCachedReg(DRV8434SRegAddr::CTRL6);
+    writeCachedReg(DRV8434SRegAddr::CTRL7);
 
     // CTRL2 is written last because it contains the EN_OUT bit, and we want to
     // try to have all the other settings correct first.
-    writeCTRL2();
+    writeCachedReg(DRV8434SRegAddr::CTRL2);
   }
 
   /// Sets the driver's current scalar (TRQ_DAC), which scales the full current
@@ -368,7 +368,7 @@ public:
     uint8_t td = ((uint16_t)percent * 4 + 3) / 25; // convert 6-100% to 1-16, rounding up by at most 0.75%
     td = 16 - td;                                  // convert 1-16 to 15-0 (15 = 6.25%, 0 = 100%)
     ctrl1 = (ctrl1 & 0b00001111) | (td << 4);
-    writeCTRL1();
+    writeCachedReg(DRV8434SRegAddr::CTRL1);
   }
 
   /// Sets the driver's current scalar (TRQ_DAC) to produce the specified scaled
@@ -399,21 +399,21 @@ public:
     if (td == 0) { td = 1; }                   // restrict to 1-16
     td = 16 - td;                              // convert 1-16 to 15-0 (15 = 6.25%, 0 = 100%)
     ctrl1 = (ctrl1 & 0b00001111) | (td << 4);
-    writeCTRL1();
+    writeCachedReg(DRV8434SRegAddr::CTRL1);
   }
 
   /// Enables the driver (EN_OUT = 1).
   void enableDriver()
   {
     ctrl2 |= (1 << 7);
-    writeCTRL2();
+    writeCachedReg(DRV8434SRegAddr::CTRL2);
   }
 
   /// Disables the driver (EN_OUT = 0).
   void disableDriver()
   {
     ctrl2 &= ~(1 << 7);
-    writeCTRL2();
+    writeCachedReg(DRV8434SRegAddr::CTRL2);
   }
 
   /// Sets the driver's decay mode (DECAY).
@@ -425,7 +425,7 @@ public:
   void setDecayMode(DRV8434SDecayMode mode)
   {
     ctrl2 = (ctrl2 & 0b11111000) | (((uint8_t)mode & 0b111) << 8);
-    writeCTRL2();
+    writeCachedReg(DRV8434SRegAddr::CTRL2);
   }
 
   /// Sets the motor direction (DIR).
@@ -446,7 +446,7 @@ public:
     {
       ctrl3 &= ~(1 << 7);
     }
-    writeCTRL3();
+    writeCachedReg(DRV8434SRegAddr::CTRL3);
   }
 
   /// Returns the cached value of the motor direction (DIR).
@@ -474,7 +474,7 @@ public:
   void enableSPIDirection()
   {
     ctrl3 |= (1 << 5);
-    writeCTRL3();
+    writeCachedReg(DRV8434SRegAddr::CTRL3);
   }
 
   /// Disables direction control through SPI (SPI_DIR = 0), making the DIR pin
@@ -482,7 +482,7 @@ public:
   void disableSPIDirection()
   {
     ctrl3 &= ~(1 << 5);
-    writeCTRL3();
+    writeCachedReg(DRV8434SRegAddr::CTRL3);
   }
 
   /// Enables stepping through SPI (SPI_STEP = 1), allowing step() to override
@@ -490,7 +490,7 @@ public:
   void enableSPIStep()
   {
     ctrl3 |= (1 << 4);
-    writeCTRL3();
+    writeCachedReg(DRV8434SRegAddr::CTRL3);
   }
 
   /// Disables stepping through SPI (SPI_STEP = 0), making the STEP pin control
@@ -498,7 +498,7 @@ public:
   void disableSPIStep()
   {
     ctrl3 &= ~(1 << 4);
-    writeCTRL3();
+    writeCachedReg(DRV8434SRegAddr::CTRL3);
   }
 
   /// Sets the driver's stepping mode (MICROSTEP_MODE).
@@ -523,7 +523,7 @@ public:
     }
 
     ctrl3 = (ctrl3 & 0b11110000) | (uint8_t)mode;
-    writeCTRL3();
+    writeCachedReg(DRV8434SRegAddr::CTRL3);
   }
 
   /// Sets the driver's stepping mode (MICROSTEP_MODE).
@@ -613,50 +613,51 @@ public:
     driver.writeReg(DRV8434SRegAddr::CTRL4, ctrl4 | (1 << 7));
   }
 
+  /// Writes the specified value to a register after updating the cached value
+  /// to match.
+  ///
+  /// Using this function keeps this object's cached settings consistent with
+  /// the settings being written to the driver, so if you are using
+  /// verifySettings(), applySettings(), and/or any of the other functions for
+  /// specific settings that this library provides, you should use this function
+  /// for direct register accesses instead of calling DRV8434SSPI::writeReg()
+  /// directly.
+  void setReg(DRV8434SRegAddr address, uint8_t value)
+  {
+    if (address < DRV8434SRegAddr::CTRL1) { return; }
+    if (address > DRV8434SRegAddr::CTRL7) { return; }
+    *cachedReg[(uint8_t)address] = value;
+    driver.writeReg(address, value);
+  }
+
 protected:
 
   uint16_t ctrl1, ctrl2, ctrl3, ctrl4, ctrl5, ctrl6, ctrl7;
 
-  /// Writes the cached value of the CTRL1 register to the device.
-  void writeCTRL1()
+  // Lookup table for converting register address to cache variable pointer
+  uint16_t * const cachedReg[12] =
   {
-    driver.writeReg(DRV8434SRegAddr::CTRL1, ctrl1);
-  }
+    nullptr, // 0x00 FAULT (not writable or cached)
+    nullptr, // 0x01 DIAG1 (not writable or cached)
+    nullptr, // 0x02 DIAG2 (not writable of cached)
+    &ctrl1,  // 0x03
+    &ctrl2,  // 0x04
+    &ctrl3,  // 0x05
+    &ctrl4,  // 0x06
+    &ctrl5,  // 0x07
+    &ctrl6,  // 0x08
+    &ctrl7,  // 0x09
+    nullptr, // 0x0A CTRL8 (not writable or cached)
+    nullptr, // 0x0B CTRL9 (not writable or cached)
+  };
 
-  /// Writes the cached value of the CTRL2 register to the device.
-  void writeCTRL2()
+  /// Writes the cached value of the given register to the device.
+  void writeCachedReg(DRV8434SRegAddr address)
   {
-    driver.writeReg(DRV8434SRegAddr::CTRL2, ctrl2);
-  }
-
-  /// Writes the cached value of the CTRL3 register to the device.
-  void writeCTRL3()
-  {
-    driver.writeReg(DRV8434SRegAddr::CTRL3, ctrl3);
-  }
-
-  /// Writes the cached value of the CTRL4 register to the device.
-  void writeCTRL4()
-  {
-    driver.writeReg(DRV8434SRegAddr::CTRL4, ctrl4);
-  }
-
-  /// Writes the cached value of the CTRL5 register to the device.
-  void writeCTRL5()
-  {
-    driver.writeReg(DRV8434SRegAddr::CTRL5, ctrl5);
-  }
-
-  /// Writes the cached value of the CTRL6 register to the device.
-  void writeCTRL6()
-  {
-    driver.writeReg(DRV8434SRegAddr::CTRL6, ctrl6);
-  }
-
-  /// Writes the cached value of the CTRL7 register to the device.
-  void writeCTRL7()
-  {
-    driver.writeReg(DRV8434SRegAddr::CTRL7, ctrl7);
+    if (address < DRV8434SRegAddr::CTRL1) { return; }
+    if (address > DRV8434SRegAddr::CTRL7) { return; }
+    uint8_t value = *cachedReg[(uint8_t)address];
+    driver.writeReg(address, value);
   }
 
 public:
