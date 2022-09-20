@@ -1,0 +1,42 @@
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+DRV8434SSPI	KEYWORD1
+DRV8434S	KEYWORD1
+DRV8434SRegAddr	KEYWORD1
+DRV8434SStepMode	KEYWORD1
+DRV8434SDecayMode	KEYWORD1
+DRV8434SFaultBit	KEYWORD1
+DRV8434SDiag1Bit	KEYWORD1
+DRV8434SDiag2Bit	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+setChipSelectPin	KEYWORD2
+readReg	KEYWORD2
+writeReg	KEYWORD2
+resetSettings	KEYWORD2
+verifySettings	KEYWORD2
+applySettings	KEYWORD2
+enableDriver	KEYWORD2
+disableDriver	KEYWORD2
+setDirection	KEYWORD2
+getDirection	KEYWORD2
+step	KEYWORD2
+enableSPIDirection	KEYWORD2
+disableSPIDirection	KEYWORD2
+enableSPIStep	KEYWORD2
+disableSPIStep	KEYWORD2
+setStepMode	KEYWORD2
+setCurrentPercent	KEYWORD2
+setCurrentMilliamps	KEYWORD2
+setDecayMode	KEYWORD2
+readFault	KEYWORD2
+readDiag1	KEYWORD2
+readDiag2	KEYWORD2
+clearFaults	KEYWORD2
+getCachedReg	KEYWORD2
+setReg	KEYWORD2
