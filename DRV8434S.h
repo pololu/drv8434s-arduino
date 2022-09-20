@@ -613,6 +613,15 @@ public:
     driver.writeReg(DRV8434SRegAddr::CTRL4, ctrl4 | (1 << 7));
   }
 
+  /// Gets the cached value of a register. If the given register address is not
+  /// valid, this function returns 0.
+  uint8_t getCachedReg(DRV8434SRegAddr address)
+  {
+    uint8_t * cachedReg = cachedRegPtr(address);
+    if (!cachedReg) { return 0; }
+    return *cachedReg;
+  }
+
   /// Writes the specified value to a register after updating the cached value
   /// to match.
   ///
@@ -624,40 +633,39 @@ public:
   /// directly.
   void setReg(DRV8434SRegAddr address, uint8_t value)
   {
-    if (address < DRV8434SRegAddr::CTRL1) { return; }
-    if (address > DRV8434SRegAddr::CTRL7) { return; }
-    *cachedReg[(uint8_t)address] = value;
+    uint8_t * cachedReg = cachedRegPtr(address);
+    if (!cachedReg) { return; }
+    *cachedReg = value;
     driver.writeReg(address, value);
   }
 
 protected:
 
-  uint16_t ctrl1, ctrl2, ctrl3, ctrl4, ctrl5, ctrl6, ctrl7;
+  uint8_t ctrl1, ctrl2, ctrl3, ctrl4, ctrl5, ctrl6, ctrl7;
 
-  // Lookup table for converting register address to cache variable pointer
-  uint16_t * const cachedReg[12] =
+  /// Returns a pointer to the variable containing the cached value for the
+  /// given register.
+  uint8_t * cachedRegPtr(DRV8434SRegAddr address)
   {
-    nullptr, // 0x00 FAULT (not writable or cached)
-    nullptr, // 0x01 DIAG1 (not writable or cached)
-    nullptr, // 0x02 DIAG2 (not writable of cached)
-    &ctrl1,  // 0x03
-    &ctrl2,  // 0x04
-    &ctrl3,  // 0x05
-    &ctrl4,  // 0x06
-    &ctrl5,  // 0x07
-    &ctrl6,  // 0x08
-    &ctrl7,  // 0x09
-    nullptr, // 0x0A CTRL8 (not writable or cached)
-    nullptr, // 0x0B CTRL9 (not writable or cached)
-  };
+    switch (address)
+    {
+      case DRV8434SRegAddr::CTRL1: return &ctrl1;
+      case DRV8434SRegAddr::CTRL2: return &ctrl2;
+      case DRV8434SRegAddr::CTRL3: return &ctrl3;
+      case DRV8434SRegAddr::CTRL4: return &ctrl4;
+      case DRV8434SRegAddr::CTRL5: return &ctrl5;
+      case DRV8434SRegAddr::CTRL6: return &ctrl6;
+      case DRV8434SRegAddr::CTRL7: return &ctrl7;
+      default: return nullptr;
+    }
+  }
 
   /// Writes the cached value of the given register to the device.
   void writeCachedReg(DRV8434SRegAddr address)
   {
-    if (address < DRV8434SRegAddr::CTRL1) { return; }
-    if (address > DRV8434SRegAddr::CTRL7) { return; }
-    uint8_t value = *cachedReg[(uint8_t)address];
-    driver.writeReg(address, value);
+    uint8_t * cachedReg = cachedRegPtr(address);
+    if (!cachedReg) { return; }
+    driver.writeReg(address, *cachedReg);
   }
 
 public:

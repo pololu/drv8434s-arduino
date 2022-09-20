@@ -39,7 +39,7 @@ void setup()
 
 void loop()
 {
-  uint8_t ctrl2 = sd.driver.readReg(DRV8434SRegAddr::CTRL2);
+  uint8_t ctrl2 = sd.getCachedReg(DRV8434SRegAddr::CTRL2);
 
   ctrl2 = (ctrl2 & 0b11100111) | (0b10 << 3); // TOFF = 0b10: 24 us PWM off time
   sd.setReg(DRV8434SRegAddr::CTRL2, ctrl2);
