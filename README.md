@@ -86,7 +86,7 @@ already on that page, see the DRV8434S class reference.
 
 ## Version history
 
-* 1.0.0 (2022-09-21): Original release.
+* 1.0.0 (2022-10-07): Original release.
 
 [a-star]: https://www.pololu.com/a-star
 [doc]: https://pololu.github.io/drv8434s-arduino/
