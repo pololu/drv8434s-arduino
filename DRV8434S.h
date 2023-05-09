@@ -424,7 +424,7 @@ public:
   /// ~~~
   void setDecayMode(DRV8434SDecayMode mode)
   {
-    ctrl2 = (ctrl2 & 0b11111000) | (((uint8_t)mode & 0b111) << 8);
+    ctrl2 = (ctrl2 & 0b11111000) | ((uint8_t)mode & 0b111);
     writeCachedReg(DRV8434SRegAddr::CTRL2);
   }
 
