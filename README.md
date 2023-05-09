@@ -86,6 +86,7 @@ already on that page, see the DRV8434S class reference.
 
 ## Version history
 
+* 1.0.1 (2023-05-08): Fixed a bug preventing `setDecayMode()` from working properly (thanks benjii33).
 * 1.0.0 (2022-10-07): Original release.
 
 [a-star]: https://www.pololu.com/a-star
